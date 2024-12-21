@@ -1,0 +1,113 @@
+---
+title: "Chapter 2 Project: Intro to Data"
+author: "Bianca"
+date: "`2/23/24`"
+output: openintro::lab_report
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(openintro)
+data(nycflights)
+```
+
+### Exercise 1
+
+Examining the distribution of departure delays of all flights with a histogram, using a smaller bin width displays more variety in the histogram. The higher the bin width gets, the less bars there will be on the histogram because most of the data is falling within a few bins. This masks the true variations of the data. 
+
+```{r flight_delays_hist}
+ggplot(data = nycflights, aes(x = dep_delay)) + geom_histogram()
+ggplot(data = nycflights, aes(x = dep_delay)) + geom_histogram(binwidth = 15, color = "blue") + ggtitle("Binwidth = 15") 
+ggplot(data = nycflights, aes(x = dep_delay)) + geom_histogram(binwidth = 150, color = "red") + ggtitle("Binwidth = 150") 
+```
+```{r filtering_LAX, include = FALSE}
+lax_flights <- nycflights %>% filter(dest == "LAX") 
+#pipe the nyc data into the filter of LAX then load into the variable/dataframe lax_flights
+
+ggplot(data = lax_flights, aes(x = dep_delay)) + geom_histogram(binwidth = 10) + ggtitle("LAX Departure Times") 
+```
+```{r LAX_summaries, include = FALSE}
+lax_flights %>% summarise(mean_dd = mean(dep_delay), median_dd = median(dep_delay), n = n()) #n is the sample size
+#summarise parameters are: mean, median, sd, var, IQR, min, max
+```
+
+### Exercise 2
+
+There are 68 flights that meet the criteria of heading to SFO in February.
+
+```{r SFO_feb}
+SFO_feb <- nycflights %>% filter(dest == "SFO", month == 2)
+count(SFO_feb)
+```
+
+### Exercise 3
+
+The distribution of the arrival delays of the SFO flights in February displays that the average of arrival delays is -4.5, meaning that on average, flights have an early arrival. There were only a handful of outlying delayed arrival flights going to SFO in February.
+
+```{r SFO_arrival}
+ggplot(data = SFO_feb, aes(x = arr_delay)) + geom_histogram(binwidth = 10)
+#summary statistics
+SFO_feb %>% summarise(mean_ad = mean(arr_delay), median_ad = median(arr_delay), iqr_ad = IQR(arr_delay), n_flights = n())
+
+```
+
+...
+
+### Exercise 4
+
+For SFO flights in February, Delta(DL) and United Airlines (UA) have the most variable arrival delays because their IQR is the highest, tied at 22.00
+```{r SFO_carriers}
+SFO_feb %>% group_by(carrier) %>% summarise(ad_median = median(arr_delay), ad_iqr = IQR(arr_delay), n_flights = n())
+```
+
+
+```{r high_avg_delays, include = FALSE}
+#Which month would you expect to have the highest average delay departing from an NYC airport??
+nycflights %>% group_by(month) %>% summarise(dd_mean = mean(dep_delay)) %>% arrange(desc(dd_mean))
+```
+
+### Exercise 5
+
+The mean departure delay is the lowest in October while the median departure delay is the lowest in September and October. The pros of using the average is that there isn;t much variation from the lowest delay month to the next lowest month, but the cons are that outliying departure delays can effect the avergae. The pros of using the median are that out of all the flight in that month, you know that half of them are around the median value, but the cons are that you dont know how far the ranges go in each direction.
+```{r lowest_dep_delay}
+#mean departure delays
+nycflights %>% group_by(month) %>% summarise(dd_mean = mean(dep_delay)) %>% arrange(dd_mean)
+
+nycflights %>% group_by(month) %>% summarise(dd_median = median(dep_delay)) %>% arrange(dd_median)
+```
+
+### Exercise 6
+
+Suppose you want to know which of the three major NYC airports has the best departing times, where a "good" departing time is less than 5 minutes. The airport to pick for best on time departure rates would be LaGuardia Airport (LGA) at 0.7279
+```{r best_dep_times}
+nycflights <- nycflights %>% mutate(dep_type = ifelse(dep_delay < 5, "on time", "delayed" ))
+# update nycflights with nycflights piped into mutator(new column dep_type = ifelse(if statement, true, false))
+nycflights %>% group_by(origin) %>% summarise(ot_dep_rate = sum(dep_type == "on time") / n()) %>% arrange(desc(ot_dep_rate))
+ggplot(data = nycflights, aes(x = origin, fill = dep_type)) + geom_bar()
+```
+
+### Exercise 7
+
+Below is the average speed of the flights:
+```{r speed_air_time}
+nycflights <- nycflights %>% mutate(avg_speed = distance / (air_time/60))
+nycflights[18] %>% arrange(avg_speed)
+```
+
+### Exercise 8
+
+Below is a scatterplot of average speed and distance. The relationship between average speed and distance shows that the greater the average speed, the farther distance traveled by the planes. With a small number of outliers outside of the distributions. 
+```{r avg_spd_dist_scatterplot}
+ggplot(data = nycflights, aes(x = avg_speed, y = distance)) + geom_point(color = "chartreuse4")
+```
+
+### Exercise 9
+Below is a scatter plot that compares the departure delays to the arrival delays from American Airlines, Delta, and United Airlines. Roughly, the cutoff point for departure delays is 60 minutes. The first slide is the whole scatterplot and the second slide is zoomed in on the arrival delay of zero and displays the coordinating departure delays. 
+
+```{r arr_dep_scatter}
+main_airlines <- nycflights %>% filter(carrier == "AA" | carrier == "DL" | carrier == "UA")
+ggplot(data = main_airlines, aes(x = dep_delay, y = arr_delay, color = carrier)) + geom_point()
+#####
+ggplot(data = main_airlines, aes(x = dep_delay, y = arr_delay, color = carrier)) + geom_point() + coord_cartesian(ylim = c(-100, 100), xlim = c(-50,100))
+```
+
