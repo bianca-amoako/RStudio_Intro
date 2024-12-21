@@ -1,0 +1,96 @@
+---
+title: "Chapter 3 Project"
+author: "Bianca Amoako"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+```
+```{r data_glimpse}
+data(kobe_basket)
+glimpse(kobe_basket)
+```
+
+### Exercise 1
+
+A streak length of 1 means that Kobe Bryant made only 1 hit before missing 1 shot. A streak of 1 would look like: H M | 
+A streak length of 0 means that Kobe Bryant missed two times in a row. 
+A streak of 0 would look like: | M |
+
+
+### Exercise 2
+The distribution of Kobe's streak lengths show that his typical streak length is 0 because he missed two times in a row the most, and his longest streak was 4 hits. 
+```{r streaks}
+#kobe_basket$shot
+kobe_streak <- calc_streak(kobe_basket$shot)
+ggplot(data = kobe_streak, aes(x = length)) + geom_bar(fill = "purple4") + geom_text(stat = "count", aes(label = after_stat(count)), vjust = -0.5)
+#length = the length of the streak
+```
+
+### Exercise 3
+
+In the simulation of the unfair coin, heads came up 24 times. Using the set seed, the data frame number_unfair_head contains the outcomes of the seed piped into a filter looking for heads, then makes a new row with the number of heads, and finally prints the count. Nrow() and print() don't have inputs because the information needed preceeds their invocation through piping.
+```{r simulate_coin_example}
+set.seed(123456) #setting the seed for simulation
+coin_outcomes <- c("heads", "tails")
+sim_unfair_coin <- sample(coin_outcomes, size = 100, replace = 100, prob = c(0.2, 0.8))
+#coin_outcomes = vector
+#c() = the possible outcomes
+#sample(vector, # rounds, T = independent F = dependent) = simulation run, prob = c(weighted prob, weighted prob)
+sim_unfair_coin #call the simulation
+number_unfair_heads <- data.frame(unfair_coin = sim_unfair_coin) %>% filter(unfair_coin=="heads") %>% nrow() %>% print()
+```
+...
+
+### Exercise 4
+
+In order for the simulation to reflect a shooting percentage of 45%, the sample function needs the argument prob = c(45, 55)
+
+```{r sim_45_shooter}
+set.seed(2468)
+shot_outcomes <- c("H", "M")
+sim_basket <- sample(shot_outcomes, size = 133, replace = TRUE, prob = c(45, 55))
+sim_basket
+table(sim_basket)
+```
+
+### Exercise 5
+
+```{r sim_streak}
+sim_streak <- calc_streak(sim_basket)
+```
+
+### Exercise 6
+
+The typical streak length for the simulated independent shooter with a 45% shooting rate is 0. The longest streak in 133 shots is 5. 
+```{r sim_streak_bar}
+ggplot(data = sim_streak, aes(x = length)) + geom_bar(fill = "orange4")
+mean(sim_streak$length)
+```
+
+### Exercise 7
+
+If I were to run the independent shooter from above a second time, the distribution would be similar because the outcome can't escape the 45% probability. There distribution would be skewed right. 
+
+```{r second_ind}
+shot_outcomes <- c("H", "M")
+sim_basket <- sample(shot_outcomes, size = 133, replace = TRUE, prob = c(45, 55))
+sim_streak2 <- calc_streak(sim_basket)
+ggplot(data = sim_streak2, aes(x = length)) + geom_bar(fill = "orange3")
+mean(sim_streak2$length)
+```
+
+### Exercise 8
+
+Kobe and the simulation streaks are similar in distribution with a slightly greater range in the simulation. This comparison supports the argument that Kobe's shooting probability is similar to the hot hand model because their averages and their ranges are very close.
+```{r streak_comp}
+ggplot(data = kobe_streak, aes(x = length)) + geom_bar(fill = "purple4") + ggtitle("KOBE'S STREAK")
+ggplot(data = sim_streak, aes(x = length)) + geom_bar(fill = "orange4") + ggtitle("SIMULATION'S STREAK")
+kobe_streak %>% summarise(kobe_streak_mean = mean(length))
+sim_streak %>% summarise(sim_streak_mean = mean(length))
+```
+
+

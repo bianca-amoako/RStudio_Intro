@@ -1,0 +1,132 @@
+---
+title: "Foundations for Statistical Inference- Sampling Distributions"
+author: "Bianca Amoako"
+date: "`r Sys.Date()`"
+output: openintro::lab_report
+---
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+library(infer)
+
+#setup
+global_monitor <- tibble(scientist_work = c(rep("Benefits", 80000), rep("Doesn't Benefit", 20000)))
+set.seed(1432)
+#bar plot
+ggplot(data = global_monitor, aes(x = scientist_work)) + geom_bar() + labs(x = "", y = "", title = "Do you believe that the work scientists do benefit people like you?") + coord_flip()
+global_monitor %>% count(scientist_work) %>% mutate(p = n / sum(n))
+```
+
+### Exercise 1
+
+The distributions in the sample of 50 people shows that the percentages can differ from the 20% and 80% in the population when asked if the work scientists do benefits people like them. 
+
+```{r exercise_1}
+samp1 <- global_monitor %>% sample_n(50)
+ggplot(data = samp1, aes(x = scientist_work)) + geom_bar() + labs(x = "", y = "", title = "Sample(50): Do you believe that the work scientists do benefit people like you?") + coord_flip()
+samp1 %>% count(scientist_work) %>% mutate(s = n / sum(n))
+```
+
+### Exercise 2
+
+I would expect the sample proportion of another student's sample to be slightly different because the population size is a larger number, 100,000. The sample sizes would stay relatively close to the true population proportion.
+
+### Exercise 3
+
+Sample 2 is similar to Sample 1. If we took two more sample of 100 and 1000 people, the sample of 1000 would be more accurate because it is closer to the original population size. 
+```{r exercise_3}
+set.seed(1534)
+samp2 <- global_monitor %>% sample_n(50)
+samp2 %>% count(scientist_work) %>% mutate(p_hat = n / sum(n))
+
+```
+
+### Exercise 4
+
+There are 15000 elements in sample_props50. The sampling distribution is pretty symmetrical centered around 20% or 0.2
+```{r exercise_4}
+sample_props50 <- global_monitor %>%
+                    rep_sample_n(size = 50, reps = 15000, replace = TRUE) %>%
+                    count(scientist_work) %>%
+                    mutate(p_hat = n /sum(n)) %>%
+                    filter(scientist_work == "Doesn't Benefit")
+
+ggplot(data = sample_props50, aes(x = p_hat)) +
+  geom_histogram(binwidth = 0.02) +
+  labs(
+    x = "p_hat (Doesn't benefit)",
+    title = "Sampling distribution of p_hat",
+    subtitle = "Sample size = 50, Number of samples = 15000"
+  )
+```
+
+### Exercise 5
+
+There are 25 observations in sample_props_small and each one represents a sample of 10 people from the population.
+
+```{r exercise_5}
+sample_props_small <- global_monitor %>% rep_sample_n(size = 10, reps = 25, replace = TRUE) %>% count(scientist_work) %>% mutate(p_hat = n / sum(n)) %>% filter(scientist_work == "Doesn't Benefit")
+
+ggplot(data = sample_props_small, aes(x = p_hat)) + geom_histogram(binwidth = 0.1) + labs(x = "p_hat (Doesn't Benefit)", title = "Sampling distribution of p_hat", subtitle = "Sample size = 10, Number of samples = 25")
+
+```
+
+### Exercise 6
+
+Each observation in the sampling distributions represents the difference in proportion of people who think scientist's work doesn't benefit them based on how large the sample sizes are. The mean and sample error gets closer to the true proportions of the population statistics as the sample size increases. The shape of the sampling distributions get closer to symmetrical the larger the sample size gets. 
+```{r exercise_6}
+#sample of size 10
+sample_prop10 <- global_monitor %>% rep_sample_n(size = 10, rep = 5000, replace = TRUE) %>% count(scientist_work) %>% mutate(p_hat = n / sum(n)) %>% filter(scientist_work == "Doesn't Benefit")
+
+ggplot(data = sample_prop10, aes(x = p_hat)) + geom_histogram(binwidth = 0.1) + labs(x = "p_hat (Doesn't Benefit)", title = "Sampling distribution of p_hat", subtitle = "Sample size = 10, Number of samples = 5,000")
+
+#sample of size 50
+sample_prop50 <- global_monitor %>% rep_sample_n(size = 50, rep = 5000, replace = TRUE) %>% count(scientist_work) %>% mutate(p_hat = n / sum(n)) %>% filter(scientist_work == "Doesn't Benefit")
+
+ggplot(data = sample_prop50, aes(x = p_hat)) + geom_histogram(binwidth = 0.02) + labs(x = "p_hat (Doesn't Benefit)", title = "Sampling distribution of p_hat", subtitle = "Sample size = 50, Number of samples = 5,000")
+
+#sample of size 100
+sample_prop100 <- global_monitor %>% rep_sample_n(size = 100, rep = 5000, replace = TRUE) %>% count(scientist_work) %>% mutate(p_hat = n / sum(n)) %>% filter(scientist_work == "Doesn't Benefit")
+
+ggplot(data = sample_prop100, aes(x = p_hat)) + geom_histogram(binwidth = 0.01) + labs(x = "p_hat (Doesn't Benefit)", title = "Sampling distribution of p_hat", subtitle = "Sample size = 100, Number of samples = 5,000")
+```
+
+### Exercise 7
+
+The best estimate from a sample size of 15 of people who think the work scientists do enhances their lives is 0.73. 
+```{r exercise_7}
+set.seed(1724)
+size_15 <- global_monitor %>% sample_n(15) %>% count(scientist_work) %>% mutate(p_hat = n / sum(n))
+size_15
+
+```
+
+### Exercise 8
+
+The sampling distribution of size 15, ran 2,000 times, is skewed right and to the left of 0.6. Based on this, a guess for the true proportion of those who think the work scientists do enhances their life is closer to 0.75. The true population proportion is 0.8.
+```{r exercise_8}
+#sample of size 15
+sample_prop15 <- global_monitor %>% rep_sample_n(size = 15, rep = 2000, replace = TRUE) %>% count(scientist_work) %>% mutate(p_hat = n / sum(n)) %>% filter(scientist_work == "Benefits")
+
+ggplot(data = sample_prop15, aes(x = p_hat)) + geom_histogram(binwidth = 0.07) + labs(x = "p_hat (Benefits)", title = "Sampling distribution of p_hat", subtitle = "Sample size = 15, Number of samples = 2,000")
+
+true_benefits <- global_monitor %>% count(scientist_work) %>% mutate(p = n / sum(n)) %>% filter(scientist_work == "Benefits")
+true_benefits
+```
+
+### Exercise 9
+
+The shape of the sampling distributions of size 150 are more normal/symmetrical around 0.8, compared to the skewed distribution of size 15. Based off of this distribution, a guess for the true proportion of people who think they benefit from the work of scientists would be 0.8. 
+```{r exercise_9}
+#sample of size 15
+sample_prop150 <- global_monitor %>% rep_sample_n(size = 150, rep = 2000, replace = TRUE) %>% count(scientist_work) %>% mutate(p_hat = n / sum(n)) %>% filter(scientist_work == "Benefits")
+
+ggplot(data = sample_prop150, aes(x = p_hat)) + geom_histogram(binwidth = 0.02) + labs(x = "p_hat (Benefits)", title = "Sampling distribution of p_hat", subtitle = "Sample size = 150, Number of samples = 2,000")
+```
+
+### Exericse 10
+Both distributions of size 50 have the same spreads. When concerned with making estimates, a smaller spread is preferred to get a more accurate value.
+
+...
+
